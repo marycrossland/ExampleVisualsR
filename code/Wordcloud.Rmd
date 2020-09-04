@@ -1,0 +1,59 @@
+---
+title: "Wordcloud"
+author: "Mary Crossland"
+date: "03/09/2020"
+output: html_document
+---
+
+
+```{r}
+
+# load libraries 
+library(tidyverse)
+library(tm)
+library(SnowballC)
+library(wordcloud)
+
+# download some data to play with 
+df <- readr::read_tsv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-08-25/chopped.tsv')
+
+
+```
+
+```{r WORDCLOUDS}
+
+# select the variable containing the text you wish to make a wordcloud using
+text <- df %>%
+  select(dessert)
+
+# create corpus
+df <- data.frame(doc_id=row.names(text), text=text$dessert)
+df <- DataframeSource(df)
+my.corpus <- VCorpus(df)
+
+# next a little bit of cleaning ...
+
+# Convert all text to lower case
+my.corpus  <- tm_map(my.corpus, content_transformer(tolower))
+# Remove any numbers
+my.corpus  <- tm_map(my.corpus , removeNumbers)
+# Remove common stopwords
+my.corpus  <- tm_map(my.corpus, removeWords, stopwords("english"))
+# Remove punctuation
+my.corpus <- tm_map(my.corpus , removePunctuation)
+# Eliminate any extra spaces
+my.corpus  <- tm_map(my.corpus , stripWhitespace)
+
+# create frequency table for words, sort and create dataframe
+tdm <- TermDocumentMatrix(my.corpus)
+m <- as.matrix(tdm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
+
+# create wordcloud
+wordcloud(words = d$word, freq = d$freq, min.freq = 1,
+          max.words=100, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+
+```
+
