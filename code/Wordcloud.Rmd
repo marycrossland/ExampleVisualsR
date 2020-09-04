@@ -5,24 +5,29 @@ date: "03/09/2020"
 output: html_document
 ---
 
+The following code is adapted from:
+http://www.sthda.com/english/wiki/text-mining-and-word-cloud-fundamentals-in-r-5-simple-steps-you-should-know
 
-```{r}
 
-# load libraries 
+```{r load libraries}
+
 library(tidyverse)
 library(tm)
-library(SnowballC)
 library(wordcloud)
+library(RColorBrewer)
+
+```
+
+```{r load data}
 
 # download some data to play with 
 df <- readr::read_tsv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-08-25/chopped.tsv')
 
-
 ```
 
-```{r WORDCLOUDS}
+```{r create word frequency table}
 
-# select the variable containing the text you wish to make a wordcloud using
+# select the variable containing the text you wish to make word cloud from
 text <- df %>%
   select(dessert)
 
@@ -31,29 +36,45 @@ df <- data.frame(doc_id=row.names(text), text=text$dessert)
 df <- DataframeSource(df)
 my.corpus <- VCorpus(df)
 
-# next a little bit of cleaning ...
-
-# Convert all text to lower case
+# Make all text lower case
 my.corpus  <- tm_map(my.corpus, content_transformer(tolower))
-# Remove any numbers
+# Remove numbers
 my.corpus  <- tm_map(my.corpus , removeNumbers)
-# Remove common stopwords
+# Remove common stop words
 my.corpus  <- tm_map(my.corpus, removeWords, stopwords("english"))
 # Remove punctuation
 my.corpus <- tm_map(my.corpus , removePunctuation)
-# Eliminate any extra spaces
+# Get rid of extra spaces
 my.corpus  <- tm_map(my.corpus , stripWhitespace)
 
-# create frequency table for words, sort and create dataframe
+# create frequency table for words, sort and create data frame
 tdm <- TermDocumentMatrix(my.corpus)
 m <- as.matrix(tdm)
 v <- sort(rowSums(m),decreasing=TRUE)
 d <- data.frame(word = names(v),freq=v)
 
-# create wordcloud
+# show top 20 most frequent words
+head(d, 20)
+
+```
+
+```{r create wordcloud}
+
+# create word cloud
 wordcloud(words = d$word, freq = d$freq, min.freq = 1,
           max.words=100, random.order=FALSE, rot.per=0.35, 
           colors=brewer.pal(8, "Dark2"))
 
 ```
+
+```{r create barplot}
+
+# bar plot of top 10 most frequent words
+barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word,
+        col ="#78c679", main ="Top 10 most frequent words",
+        ylab = "Word frequencies")
+
+```
+
+
 
